@@ -1,62 +1,56 @@
 import 'package:flutter/material.dart';
 import '../services/location.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/networking.dart';
+import 'location_screen.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 const apiKey = 'f3f8f777febdbe8ce08529f4b10f132b';
-double altitude;
+double longitude;
 double latitude;
-
-
+var url =
+    'https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&appid=$apiKey&units=metric';
 
 class LoadingScreen extends StatefulWidget {
-  
   @override
   _LoadingScreenState createState() => _LoadingScreenState();
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
- 
   @override
   void initState() {
-    getLoacation();
+    getLoacationData();
+
     super.initState();
   }
-void getDate() async{
-  
-  http.Response response = await http.get('https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$altitude&appid=$apiKey');
-  
-  print(response.statusCode);
-  if(response.statusCode == 200){
-    String data = response.body;
-    var temp = jsonDecode(data)['main']['temp']; //main.temp
-    var city = jsonDecode(data)['name'];
-    print(temp);
-    print(city);
+
+  void getLoacationData() async {
+    Location location = Location();
+    await location.getCurrentlocation();
+    latitude = location.latitude;
+    longitude = location.longitude;
+    print('latitude:$latitude');
+    print('longitude:$longitude');
+    Network network = Network(url);
+    var wetherData = await network.getDate();
+    print(wetherData['main']['temp'].round());
+    print(location.latitude);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return LocationScreen(wetherData);
+        },
+      ),
+    );
   }
 
-}  
-void getLoacation() async {
-  Location location = Location();
-   await location.getCurrentlocation();
-  latitude = location.latitude;
-  altitude = location.altitude;
-  print(location.altitude);
-  print(location.latitude);
-}
   @override
   Widget build(BuildContext context) {
-   
     return Scaffold(
       body: Center(
-        child: RaisedButton(
-          onPressed: () {
-            //Get the current location
-          // getlocation();
-           getDate();
-
-          },
-          child: Text('Get Location'),
+        child: SpinKitDoubleBounce(
+          color: Colors.white,
+          size: 150.0,
         ),
       ),
     );
